@@ -7,7 +7,7 @@ import React, { useEffect } from 'react';
 
 import cityBackground from '../../assets/city_background.jpg';
 import Logo from '../../components/logo/Logo';
-import { xhrPost } from '../../services/xhr';
+import { xhrGet, xhrPost } from '../../services/xhr';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useActions, useSelector } from '../../services/state/store';
 import { Input, Button, Banner } from '@douyinfe/semi-ui-19';
@@ -15,6 +15,7 @@ import { Input, Button, Banner } from '@douyinfe/semi-ui-19';
 import './login.less';
 import { IconUser, IconLock } from '@douyinfe/semi-icons';
 import { useTranslation } from '../../services/i18n/i18n.jsx';
+import { consumeManualLogout } from '../../services/oidc.js';
 
 export default function Login() {
   const t = useTranslation();
@@ -22,13 +23,37 @@ export default function Login() {
   const [username, setUserName] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [error, setError] = React.useState(null);
+  const [oidcConfig, setOidcConfig] = React.useState({ enabled: false, autoLogin: false });
   const demoMode = useSelector((state) => state.demoMode.demoMode || false);
   const navigate = useNavigate();
   const location = useLocation();
 
+  const getReturnTo = () => {
+    const from = location.state?.from;
+    return `${from?.pathname || '/dashboard'}${from?.search || ''}${from?.hash || ''}`;
+  };
+
+  const startOidcLogin = () => {
+    window.location.assign(`/api/login/oidc/start?returnTo=${encodeURIComponent(getReturnTo())}`);
+  };
+
   useEffect(() => {
     async function init() {
-      await actions.demoMode.getDemoMode();
+      actions.demoMode.getDemoMode().catch(() => {});
+      try {
+        const response = await xhrGet('/api/login/oidc/status');
+        const config = response.json;
+        setOidcConfig(config);
+
+        const query = new URLSearchParams(location.search);
+        const manualLogin = consumeManualLogout() || query.has('manual');
+        if (query.has('oidcError')) setError(t('login.errorOidc'));
+        if (config.enabled && config.autoLogin && !query.has('oidcError') && !manualLogin) {
+          startOidcLogin();
+        }
+      } catch {
+        setOidcConfig({ enabled: false, autoLogin: false });
+      }
     }
 
     init();
@@ -53,7 +78,7 @@ export default function Login() {
     }
 
     await actions.user.getCurrentUser();
-    navigate(location.state?.from?.pathname || '/dashboard');
+    navigate(getReturnTo());
   };
 
   return (
@@ -73,6 +98,12 @@ export default function Login() {
             description={t('login.demoBanner')}
             style={{ marginBottom: '1.5rem' }}
           />
+        )}
+
+        {oidcConfig?.enabled && (
+          <Button block type="primary" onClick={startOidcLogin} theme="solid" style={{ marginBottom: '1.2rem' }}>
+            {t('login.oidcButton')}
+          </Button>
         )}
 
         <form onSubmit={(e) => e.preventDefault()}>
