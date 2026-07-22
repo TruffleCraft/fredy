@@ -5,17 +5,37 @@
 
 import { xhrPost } from '../../services/xhr';
 import { IconUser } from '@douyinfe/semi-icons';
+import React from 'react';
+import { useTranslation } from '../../services/i18n/i18n.jsx';
+import { clearManualLogout, markManualLogout } from '../../services/oidc.js';
 
 const Logout = function Logout({ text }) {
+  const t = useTranslation();
+  const [pending, setPending] = React.useState(false);
   const handleLogout = async () => {
-    await xhrPost('/api/login/logout');
-    location.reload();
+    if (pending) return;
+    setPending(true);
+    markManualLogout();
+    try {
+      const response = await xhrPost('/api/login/logout');
+      location.assign(response.json.redirect || '/#/login?manual=1');
+    } catch {
+      clearManualLogout();
+    } finally {
+      setPending(false);
+    }
   };
 
   return (
-    <button className={`navigate__logout-btn${!text ? ' navigate__logout-btn--icon-only' : ''}`} onClick={handleLogout}>
+    <button
+      aria-label={t('nav.logout')}
+      title={t('nav.logout')}
+      disabled={pending}
+      className={`navigate__logout-btn${!text ? ' navigate__logout-btn--icon-only' : ''}`}
+      onClick={handleLogout}
+    >
       <IconUser size="default" />
-      {text && 'Logout'}
+      {text && t('nav.logout')}
     </button>
   );
 };

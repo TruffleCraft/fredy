@@ -19,12 +19,15 @@
   "nav.settingsPage": "Einstellungen",
   "nav.expandSidebar": "Seitenleiste ausklappen",
   "nav.collapseSidebar": "Seitenleiste einklappen",
+  "nav.logout": "Abmelden",
 
   "login.usernamePlaceholder": "Benutzername",
   "login.passwordPlaceholder": "Passwort",
   "login.loginButton": "Anmelden",
+  "login.oidcButton": "Mit OpenID Connect anmelden",
   "login.errorMandatory": "Benutzername und Passwort sind Pflichtfelder.",
   "login.errorInvalid": "Anmeldung fehlgeschlagen. Bitte überprüfe Benutzername und Passwort.",
+  "login.errorOidc": "Single Sign-on ist fehlgeschlagen. Versuche es erneut oder nutze dein Fredy-Passwort.",
   "login.demoBanner": "Dies ist die Demo-Version von Fredy. Verwende 'demo' als Benutzername & Passwort zum Einloggen.",
 
   "dashboard.title": "Dashboard",
